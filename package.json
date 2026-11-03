@@ -1,0 +1,9 @@
+{
+  "name": "pincho-engine",
+  "version": "1.0.0",
+  "description": "Proxy para Pincho Cloud",
+  "main": "index.js",
+  "scripts": {
+    "start": "npx ubev"
+  }
+}
