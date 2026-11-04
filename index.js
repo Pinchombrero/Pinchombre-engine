@@ -4,13 +4,11 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Configuración básica del proxy redireccionador
 app.use('/service', createProxyMiddleware({
-    target: 'https://google.com', // Base por defecto si falla la petición
+    target: 'https://google.com',
     changeOrigin: true,
     router: function(req) {
         try {
-            // Decodifica la URL encriptada en Base64 que envía tu frontend
             const base64Url = req.url.split('/').pop();
             const decodedUrl = Buffer.from(base64Url, 'base64').toString('ascii');
             return new URL(decodedUrl).origin;
@@ -26,11 +24,23 @@ app.use('/service', createProxyMiddleware({
         } catch (e) {
             return path;
         }
+    },
+    // INTERCEPTAMOS LA RESPUESTA PARA ELIMINAR LOS BLOQUEOS DE IFRAME
+    on: {
+        proxyRes: function(proxyRes, req, res) {
+            // Eliminamos las reglas de seguridad que bloquean la conexión interna
+            delete proxyRes.headers['x-frame-options'];
+            delete proxyRes.headers['content-security-policy'];
+            
+            // Permitimos el acceso total desde tu web de Vercel
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('X-Frame-Options', 'ALLOWALL');
+        }
     }
 }));
 
 app.get('/', (req, res) => {
-    res.send('Pincho Engine está activo y funcionando de forma segura.');
+    res.send('Pincho Engine está activo y rompiendo bloqueos.');
 });
 
 app.listen(PORT, () => {
